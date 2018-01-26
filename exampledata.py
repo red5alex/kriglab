@@ -18,11 +18,11 @@ def sine_data(start = 0,
         df_z = df_z.sample(n_sample)
     
     df_z["y"] = 0
-    df_z["true"] = amplitude * np.sin(df_z["x"]/(365.24)*2*m.pi)
+    df_z["truez"] = amplitude * np.sin(df_z["x"]/(365.24)*2*m.pi)
     if noise_type == "gaussian":
         df_z["noise"] = np.random.randn(len(df_z)) * noise_std + noise_mean
         df_z["confidence95"] = noise_std * 1.96
-        df_z["measurement"] = df_z["true"] + df_z["noise"] 
+        df_z["measurement"] = df_z["truez"] + df_z["noise"] 
     else:
         raise ValueError("unknown noise_type "+str(noise_type))
      
