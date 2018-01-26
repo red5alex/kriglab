@@ -84,7 +84,7 @@ def hole_N (h, a, C0, Cn=0):
     if type(h) == np.float64:
         # calculate the hole function
         if h == 0:
-            return 0
+            return Cn
         else: 
             return Cn+(C0-Cn)*( 1-(sin(h/a ))/(h/a) )
 
