@@ -5,7 +5,8 @@ import math as m
 def sine_data(start = 0,
               stop = 3*365,
               resolution = 3*365,
-              period = 365,             
+              period = 365,
+              true_mean = 0.,
               amplitude = 10,
               noise_type ="gaussian",
               noise_mean = 0,
@@ -18,7 +19,8 @@ def sine_data(start = 0,
         df_z = df_z.sample(n_sample)
     
     df_z["y"] = 0
-    df_z["truez"] = amplitude * np.sin(df_z["x"]/(365.24)*2*m.pi)
+    df_z["truez"] = amplitude * (np.sin(df_z["x"]/(365.24)*2*m.pi)) + true_mean
+     
     if noise_type == "gaussian":
         df_z["noise"] = np.random.randn(len(df_z)) * noise_std + noise_mean
         df_z["confidence95"] = noise_std * 1.96
