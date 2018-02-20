@@ -1,30 +1,37 @@
+# See the companion Jupyter Notebook "Semivariogram Models" for detailed information
+
 import numpy as np
+import collections
 from math import *
 
-def gaussian( h, a, C0, Cn=0 ):
+# Standard Semivariogram Models
+
+def gaussian( h, a, C0, Cn=0., **kwargs ):
     '''
     Gaussian model of the semivariogram
-    h = euclidean distance between a par of points
+    h = euclidean distance between a pair of points
     a = range
     C0 = sill
-    Cn = nugget / measurement error
+    Cn = nugget
     '''
-    # if h is a single digit
-    if type(h) == np.float64:
-        # calculate the gaussian function
-        return Cn+(C0-Cn) * (1 - exp(-3*h**2/a**2))
-        
-    # if h is an iterable
-    else:
-        # calcualte the gaussian function for all elements
+    if isinstance(h, collections.Iterable):
+        # calculate the gaussian function for all elements
         a = np.ones( h.size ) * a
         C0 = np.ones( h.size ) * C0
         Cn = np.ones(h.size) * Cn
         return map( gaussian, h, a, C0, Cn )
+    else:
+        # calculate the gaussian function
+        return Cn+(C0-Cn) * (1 - exp(-3*h**2/a**2))
+
     
-def spherical( h, a, C0, Cn=0 ):
+def spherical( h, a, C0, Cn=0., **kwargs):
     '''
     Spherical model of the semivariogram
+    h = euclidean distance between a pair of points
+    a = range
+    C0 = sill
+    Cn = nugget
     '''
     # if h is a single digit
     if type(h) == np.float64:
@@ -41,9 +48,14 @@ def spherical( h, a, C0, Cn=0 ):
         Cn = np.ones(h.size) * Cn
         return map( spherical, h, a, C0, Cn )
     
-def exponential( h, a, C0, Cn=0 ):
+
+def exponential( h, a, C0, Cn=0., **kwargs):
     '''
     Exponential model of the semivariogram
+    h = euclidean distance between a pair of points
+    a = range
+    C0 = sill
+    Cn = nugget
     '''
     # if h is a single digit
     if type(h) == np.float64:
@@ -53,16 +65,32 @@ def exponential( h, a, C0, Cn=0 ):
         
     # if h is an iterable
     else:
+        h = np.array(h)
         # calcualte the exponential function for all elements
         a = np.ones( h.size ) * a
         C0 = np.ones( h.size ) * C0
         Cn = np.ones(h.size) * Cn
         return map( exponential, h, a, C0, Cn )
+
+# business functions
+
+def instance_of(model, **kwargs):
+    """
+    return an instance of the variogram function.
+    """
+    svmfct = lambda h: model( h, **kwargs)
+    return svmfct
     
-def hole (h, a, C0, Cn=0):
+
+# Non-Standard Semivariogram functions
+def hole (h, a, C0, Cn=0., **kwargs ):
     '''
     hole effect model of the semivariogram
-    only valid for 1D kriging!!
+    Should be used in 1D kriging only.
+    h = euclidean distance between a pair of points
+    a = range
+    C0 = sill
+    Cn = nugget
     '''
     if type(h) == np.float64:
         # calculate the hole function from Kitanidis (book, 1997)
@@ -76,9 +104,14 @@ def hole (h, a, C0, Cn=0):
         Cn = np.ones(h.size) * Cn
         return map( hole, h, a, C0, Cn )
 
-def hole_N (h, a, C0, Cn=0):
+def hole_N (h, a, C0, Cn=0., **kwargs ):
     '''
-    Hole effect model of the semivariogram
+    Hole effect model of the semivariogram 
+    (Triki et al. p.1600 / Dowdall et al. 2003)
+    h = euclidean distance between a pair of points
+    a = range
+    C0 = sill
+    Cn = nugget
     '''
     # from Triki et al. p.1600 (Dowdall et al. 2003)
     if type(h) == np.float64:
@@ -94,4 +127,5 @@ def hole_N (h, a, C0, Cn=0):
         a = np.ones( h.size ) * a
         C0 = np.ones( h.size ) * C0
         Cn = np.ones(h.size) * Cn
-        return map( hole_N, h, a, C0, Cn )    
+        return map( hole_N, h, a, C0, Cn )
+    
