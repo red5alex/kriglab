@@ -1,6 +1,7 @@
 # See the companion Jupyter Notebook "Semivariogram Models" for detailed information
 
 import numpy as np
+from scipy.spatial.distance import squareform, pdist
 import collections
 from math import *
 
@@ -80,6 +81,27 @@ def instance_of(model, **kwargs):
     """
     svmfct = lambda h: model( h, **kwargs)
     return svmfct
+
+def get_empirical_semivariogram(X, Y, Z, max_distance, bandwidth):
+    '''
+    Experimental variogram for a collection of lags
+    '''    
+    P = np.stack( [X, Y, Z] ).T
+    pd = squareform( pdist( P[:,:2] ) )
+    N = pd.shape[0]
+    hs = np.arange(0, max_distance, bandwidth)
+    
+    sv = list()
+    for h in hs:  
+        Z = list()
+        for i in range(N):
+            for j in range(i+1,N):
+                if( pd[i,j] >= h-bandwidth )and( pd[i,j] <= h+bandwidth ):
+                    Z.append( ( P[i,2] - P[j,2] )**2.0 )
+        sumz = np.sum( Z ) / ( 2.0 * len( Z ) )
+        sv.append( sumz )
+    sv = [ [ hs[i], sv[i] ] for i in range( len( hs ) ) if sv[i] > 0 ]
+    return np.array( sv ).T
     
 
 # Non-Standard Semivariogram functions
