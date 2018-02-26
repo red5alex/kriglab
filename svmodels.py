@@ -17,6 +17,7 @@ def gaussian( h, a, C0, Cn=0., **kwargs ):
     '''
     if isinstance(h, collections.Iterable):
         # calculate the gaussian function for all elements
+        h = np.array(h)
         a = np.ones( h.size ) * a
         C0 = np.ones( h.size ) * C0
         Cn = np.ones(h.size) * Cn
