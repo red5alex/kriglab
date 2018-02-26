@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
-def kriging_simple( X, F, covfct, u, n, mu=None, V=0. ):
+def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
     '''
     Input  (X)       Cartesian Coordinates of sample points (array-like, n x dim)
            (F)       Sampled values (array-like, n x 1)
@@ -25,11 +25,23 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0. ):
     if np.isscalar(V):
         V = np.ones_like(F) * V
     
+    # if no trend function is provided, trend is zero
+    if trendf is None:
+        trendf = lambda x: 0
+    
     # cast array-like input to arrays
     X = np.asarray(X)
     F = np.asarray(F)
     u = np.asarray(u)
     V = np.asarray(V)
+    
+    # convert any 1D arrays to one-columned 2D matrices
+    if len(X.shape) == 1: 
+        X = X.reshape(X.shape[0],1)
+    if len(F.shape) == 1:
+        F = F.reshape(F.shape[0],1)
+    if len(V.shape) == 1:
+        V = V.reshape(V.shape[0],1)
 
     # check correct dimensionality of input
     if X.shape[1] != len(u):
@@ -42,14 +54,6 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0. ):
     # if mean is not given, use mean of the samples
     if mu is None:
         mu = np.mean( F ) 
-    
-    # convert any 1D arrays to one-columned 2D matrices
-    if len(X.shape) == 1: 
-        X = X.reshape(X.shape[0],1)
-    if len(F.shape) == 1:
-        F = F.reshape(F.shape[0],1)
-    if len(V.shape) == 1:
-        V = V.reshape(V.shape[0],1)
     
     ## Simple Kriging ##
     
@@ -68,6 +72,10 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0. ):
     # cast as a matrix
     k = np.matrix( k ).T
  
+    # calculate the trend function at sample points X and u
+    tu = trendf(u)
+    T = np.apply_along_axis(trendf, 1, P[:,:xdim])
+ 
     # form a matrix of distances between sample points
     K = squareform( pdist( P[:,:xdim] ) )
     # apply the covariance model to these distances
@@ -80,16 +88,19 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0. ):
     K = np.matrix( K )
     
     # add the individual noise variance to the principal diagonal of K 
-    K += np.identity(K.shape[0]) * P[:,xdim+2]
+    K += np.identity(K.shape[0]) * P[:, xdim+2]
 
     # calculate the kriging weights
     weights = np.linalg.inv( K ) * k
     weights = np.array( weights )
  
-    # calculate the residuals
-    residuals = P[:,xdim] - mu
+    if len(T.shape) == 1:
+        T = T.reshape(T.shape[0],1)
  
+    # calculate the residuals to trend
+    residuals = P[:,xdim] - T[:,0]  #- mu
+
     # calculate the estimation
-    estimation = np.dot( weights.T, residuals ) + mu
- 
-    return (float( estimation ), weights, K, k, P)
+    estimate = np.dot( weights.T, residuals ) + tu #+ mu
+
+    return (float( estimate ), weights, K, k, P, T)
