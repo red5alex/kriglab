@@ -5,16 +5,18 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
     '''
     Input  (X)       Cartesian Coordinates of sample points (array-like, n x dim)
            (F)       Sampled values (array-like, n x 1)
-           (covfct)  covariance modelling function f(distance) for semivariogram
+           (covfct)  covariance modelling function (function handler, F(distance) )
            (u)       coordinates of unsampled point (array-like, dim) 
-           (N)       number of neighboring points to consider
+           (N)       number of neighboring points to consider during computation
            (mu)      known mean of values 
                      Default = mean of Z
            (V)       known variance of sample values Z.
                      - if a scalar, V is applied to all sample points. Default = 0.
                      - if array-like, is applied as individual variance
                        for each sample point  (must be of same size as Z)
-    '''   
+           (trendf)  trend function handler
+    '''
+    
     ## Parameter handling ##
     
     # reduce number of neighbors if exceeding sample points
@@ -78,12 +80,16 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
  
     # form a matrix of distances between sample points
     K = squareform( pdist( P[:,:xdim] ) )
+
     # apply the covariance model to these distances
     K = covfct( K.ravel() )
+
     # re-cast as a NumPy array -- thanks M.L.
     K = np.array( K )
+
     # reshape into an array
     K = K.reshape(n,n)
+
     # cast as a matrix
     K = np.matrix( K )
     
@@ -103,4 +109,10 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
     # calculate the estimation
     estimate = np.dot( weights.T, residuals ) + tu #+ mu
 
-    return (float( estimate ), weights, K, k, P, T)
+   # calculate the Kriging variance
+    assert (K.diagonal().max() - K.diagonal().min()) < (K.diagonal().mean() * 1e-9) ,"Diagonal of K is not homogeneous!"
+    C0 = np.diag(K).mean()  # K.diag()  is supposed to contain the sill
+    variance = C0 - np.dot(weights.T, k)
+    variance = max(0, variance**2) # round-off errors may cause negatives close to zero
+    
+    return estimate, variance, {"weights" : weights, "K" : K, "k": k, "P" : P}
