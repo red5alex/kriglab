@@ -55,7 +55,9 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
         
     # if mean is not given, use mean of the samples
     if mu is None:
-        mu = np.mean( F ) 
+        mu = np.mean( F )
+    if trendf is not None:
+        mu = 0.
     
     ## Simple Kriging ##
     
@@ -104,10 +106,10 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
         T = T.reshape(T.shape[0],1)
  
     # calculate the residuals to trend
-    residuals = P[:,xdim] - T[:,0]  #- mu
+    residuals = P[:,xdim] - T[:,0]  - mu
 
     # calculate the estimation
-    estimate = np.dot( weights.T, residuals ) + tu #+ mu
+    estimate = np.dot( weights.T, residuals ) + tu + mu
 
    # calculate the Kriging variance
     assert (K.diagonal().max() - K.diagonal().min()) < (K.diagonal().mean() * 1e-9) ,"Diagonal of K is not homogeneous!"
