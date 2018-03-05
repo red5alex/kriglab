@@ -52,7 +52,19 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
         raise ValueError("X and F must be of equal Length ({} != {})".format(X.shape[0], X.shape[1]))
     if F.shape != V.shape:
         raise ValueError("F and V must be of equal shape ({} != {})".format(F.shape, V.shape))
+    
+    # handle datetime objects
+    if np.issubdtype(X.dtype, np.datetime64):
         
+        # check that unsampled point is datetime as well
+        if not np.issubdtype(u.dtype, np.datetime64):
+            ValueError("dtype mismatch of X and u")
+        
+        # define a reference date and convert arrays to float-type
+        T0 = X[0]  
+        X = np.array(X - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)  
+        u = np.array(u - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)
+    
     # if mean is not given, use mean of the samples
     if mu is None:
         mu = np.mean( F )
