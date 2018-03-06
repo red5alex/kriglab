@@ -86,7 +86,15 @@ def instance_of(model, **kwargs):
 def get_empirical_semivariogram(X, Y, Z, max_distance, bandwidth):
     '''
     Experimental variogram for a collection of lags
-    '''    
+    '''
+    
+    # handle datetime objects
+    if np.issubdtype(X.dtype, np.datetime64):
+        # define a reference date and convert arrays to float-type
+        assert len(X.shape) == 1, "dimension for dtype array greater than 1 not supported"
+        T0 = X[0]  
+        X = np.array(X - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)  
+    
     P = np.stack( [X, Y, Z] ).T
     pd = squareform( pdist( P[:,:2] ) )
     N = pd.shape[0]
