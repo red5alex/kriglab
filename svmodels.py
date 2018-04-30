@@ -10,10 +10,12 @@ from math import *
 def gaussian( h, a, C0, Cn=0., **kwargs ):
     '''
     Gaussian model of the semivariogram
-    h = euclidean distance between a pair of points
-    a = range
-    C0 = sill
-    Cn = nugget
+       sv(h) = Cn+(C0-Cn) * (1 - exp(-3*h**2/a**2))
+    with:
+       h = euclidean distance between a pair of points
+       a = range
+       C0 = sill
+       Cn = nugget
     '''
     if isinstance(h, collections.Iterable):
         # calculate the gaussian function for all elements
@@ -30,49 +32,48 @@ def gaussian( h, a, C0, Cn=0., **kwargs ):
 def spherical( h, a, C0, Cn=0., **kwargs):
     '''
     Spherical model of the semivariogram
-    h = euclidean distance between a pair of points
-    a = range
-    C0 = sill
-    Cn = nugget
+       sv(h) = Cn + (C0-Cn)*( 1.5*h/a - 0.5*(h/a)**3.0 ) if h <= a, else C0
+    with:
+       h = euclidean distance between a pair of points
+       a = range
+       C0 = sill
+       Cn = nugget
     '''
-    # if h is a single digit
-    if type(h) == np.float64:
+    if isinstance(h, collections.Iterable):
+        # calculate the gaussian function for all elements
+        h = np.array(h)
+        a = np.ones( h.size ) * a
+        C0 = np.ones( h.size ) * C0
+        Cn = np.ones(h.size) * Cn
+        return map( spherical, h, a, C0, Cn )
+    else:
         # calculate the spherical function
         if h <= a:
             return Cn + (C0-Cn)*( 1.5*h/a - 0.5*(h/a)**3.0 )
         else:
             return C0
-    # if h is an iterable
-    else:
-        # calcualte the spherical function for all elements
-        a = np.ones( h.size ) * a
-        C0 = np.ones( h.size ) * C0
-        Cn = np.ones(h.size) * Cn
-        return map( spherical, h, a, C0, Cn )
     
 
 def exponential( h, a, C0, Cn=0., **kwargs):
     '''
     Exponential model of the semivariogram
-    h = euclidean distance between a pair of points
-    a = range
-    C0 = sill
-    Cn = nugget
+       sv(h) = Cn+(C0-Cn) * (1 - exp(-3*h/a))
+    with:
+       h = euclidean distance between a pair of points
+       a = range
+       C0 = sill
+       Cn = nugget
     '''
-    # if h is a single digit
-    if type(h) == np.float64:
-        
-        # calculate the exponential function
-        return Cn+(C0-Cn) * (1 - exp(-3*h/a))
-        
-    # if h is an iterable
-    else:
+    if isinstance(h, collections.Iterable):
+        # calculate the gaussian function for all elements
         h = np.array(h)
-        # calcualte the exponential function for all elements
         a = np.ones( h.size ) * a
         C0 = np.ones( h.size ) * C0
         Cn = np.ones(h.size) * Cn
         return map( exponential, h, a, C0, Cn )
+    else:
+        # calculate the gaussian function
+        return Cn+(C0-Cn) * (1 - exp(-3*h/a))
 
 # business functions
 
@@ -93,8 +94,8 @@ def get_empirical_semivariogram(X, Y, Z, max_distance, bandwidth):
         # define a reference date and convert arrays to float-type
         assert len(X.shape) == 1, "dimension for dtype array greater than 1 not supported"
         T0 = X[0]  
-        X = np.array(X - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)  
-    
+        X = np.array(X - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)
+        
     P = np.stack( [X, Y, Z] ).T
     pd = squareform( pdist( P[:,:2] ) )
     N = pd.shape[0]
