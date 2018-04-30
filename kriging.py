@@ -27,9 +27,13 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
     if np.isscalar(V):
         V = np.ones_like(F) * V
     
+    # if mean is not given, use mean of the samples
+    if mu is None:
+        mu = np.mean( F )
+        
     # if no trend function is provided, trend is zero
     if trendf is None:
-        trendf = lambda x: 0
+        trendf = lambda x: mu
     
     # cast array-like input to arrays
     X = np.asarray(X)
@@ -65,12 +69,6 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
         X = np.array(X - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)  
         u = np.array(u - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)
     
-    # if mean is not given, use mean of the samples
-    if mu is None:
-        mu = np.mean( F )
-    if trendf is not None:
-        mu = 0.
-    
     ## Simple Kriging ##
     
     # distance between u and each sample point
@@ -88,8 +86,8 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
     # cast as a matrix
     k = np.matrix( k ).T
  
-    # calculate the trend function at sample points X and u
-    tu = trendf(u)
+    # calculate the trend function at sample points X and unsampled point u
+    trendu = trendf(u)
     T = np.apply_along_axis(trendf, 1, P[:,:xdim])
  
     # form a matrix of distances between sample points
@@ -118,15 +116,15 @@ def kriging_simple( X, F, covfct, u, n, mu=None, V=0., trendf=None ):
         T = T.reshape(T.shape[0],1)
  
     # calculate the residuals to trend
-    residuals = P[:,xdim] - T[:,0]  - mu
+    residuals = P[:,xdim] - T[:,0] #- trendu
 
     # calculate the estimation
-    estimate = np.dot( weights.T, residuals ) + tu + mu
+    estimate = np.dot( weights.T, residuals ) + trendu
 
    # calculate the Kriging variance
-    assert (K.diagonal().max() - K.diagonal().min()) < (K.diagonal().mean() * 1e-9) ,"Diagonal of K is not homogeneous!"
+    assert (K.diagonal().max() - K.diagonal().min()) < (K.diagonal().mean() * 1e-9) , "Diagonal of K is not homogeneous! "+str(K.diagonal())
     C0 = np.diag(K).mean()  # K.diag()  is supposed to contain the sill
     variance = C0 - np.dot(weights.T, k)
     variance = max(0, variance**2) # round-off errors may cause negatives close to zero
     
-    return estimate, variance, {"weights" : weights, "K" : K, "k": k, "P" : P}
+    return estimate, variance, {"weights" : weights, "K" : K, "k": k, "P" : P, "mu" : mu}
