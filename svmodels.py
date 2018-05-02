@@ -112,6 +112,23 @@ def get_empirical_semivariogram(X, Y, Z, max_distance, bandwidth):
         sv.append( sumz )
     sv = [ [ hs[i], sv[i] ] for i in range( len( hs ) ) if sv[i] > 0 ]
     return np.array( sv ).T
+
+def svm2cvm( svmodel, C0=None ):
+    '''
+    Converts a semivariogram model into a covariance model:
+    cvm(h) = sill - svm(h)
+    Input:  (svm)    model of the semivariogram 
+            (sill)   the sill of the model.
+                     if None, sill=svm(1e16) - this will only work if a sill is asymptotic 
+                     (e.g., do not use for exponential)
+    Output: (covfct) function modeling the covariance
+    '''
+    # calculate the sill
+    if C0 is None:
+        C0 = svmodel(1e16)
+    # return a covariance function
+    cvm = lambda h: C0 * np.ones_like( h ) - model( h )
+    return cvm
     
 
 # Non-Standard Semivariogram functions
