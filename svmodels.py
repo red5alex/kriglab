@@ -24,7 +24,7 @@ def gaussian(h, a, C0, Cn=0.0, **kwargs):
         a = np.ones(h.size) * a
         C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map(gaussian, h, a, C0, Cn)
+        return list(map(gaussian, h, a, C0, Cn))
     else:
         # calculate the gaussian function
         return Cn + (C0 - Cn) * (1 - exp(-3 * h ** 2 / a ** 2))
@@ -46,7 +46,7 @@ def spherical(h, a, C0, Cn=0.0, **kwargs):
         a = np.ones(h.size) * a
         C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map(spherical, h, a, C0, Cn)
+        return list(map(spherical, h, a, C0, Cn))
     else:
         # calculate the spherical function
         if h <= a:
@@ -71,7 +71,7 @@ def exponential(h, a, C0, Cn=0.0, **kwargs):
         a = np.ones(h.size) * a
         C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map(exponential, h, a, C0, Cn)
+        return list(map(exponential, h, a, C0, Cn))
     else:
         # calculate the gaussian function
         return Cn + (C0 - Cn) * (1 - exp(-3 * h / a))
