@@ -134,7 +134,7 @@ def svm2cvm(svmodel, C0=None):
     if C0 is None:
         C0 = svmodel(1e16)
     # return a covariance function
-    cvm = lambda h: C0 * np.ones_like(h) - model(h)
+    cvm = lambda h: C0 * np.ones_like(h) - svmodel(h)
     return cvm
 
 
