@@ -3,3 +3,10 @@ env/
 
 # PyCharm settings
 .idea/
+
+# Python caching
+*.pyc
+__pycache__/
+
+# Python package
+*.egg-info/
