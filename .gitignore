@@ -1,0 +1,15 @@
+# Python virtual environment
+env/
+
+# PyCharm settings
+.idea/
+
+# Python caching
+*.pyc
+__pycache__/
+
+# Python packaging
+*.egg-info/
+
+# Output from tox
+.tox/
