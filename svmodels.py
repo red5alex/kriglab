@@ -1,9 +1,9 @@
 # See the companion Jupyter Notebook "Semivariogram Models" for detailed information
 
 import numpy as np
-from scipy.spatial.distance import squareform, pdist
 import collections
 from math import *
+from scipy.spatial.distance import pdist, squareform
 
 # Standard Semivariogram Models
 
@@ -185,3 +185,59 @@ def hole_N(h, a, C0, Cn=0.0, **kwargs):
         C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
         return map(hole_N, h, a, C0, Cn)
+
+
+def hole_New (h, C0, a, Cn=0):
+    #from Triki et al. p.1600 (Dowdall et al. 2003)
+    if type(h) == np.float64:
+        # calculate the hole function
+        if h == 0:
+            return Cn
+        if h <= pi*2*a:
+            return (Cn+(C0-Cn)*(1-(sin(h/a ))/(h/a) ))
+        if pi*2*a < h <= pi*4*a:
+            return (Cn+(C0-Cn)*(1-(3*sin(h/a ))/(h/a) ))
+        if h > pi*4*a:
+            return (Cn+(C0-Cn)*(1-(4*sin(h/a ))/(h/a) ))
+    # if h is an iterable
+    else:
+        # calculate the hole function for all elements
+        a = np.ones( h.size ) * a
+        C0 = np.ones( h.size ) * C0
+        Cn = np.ones(h.size) * Cn
+        return map( hole_New, h, a, C0, Cn )
+
+
+def SVh(P, h, bw):
+    '''
+    Experimental semivariogram for a single lag
+    '''
+    pd = squareform(pdist(P[:, :2]))
+    N = pd.shape[0]
+    Z = list()
+    for i in range(N):
+        for j in range(i + 1, N):
+            if (pd[i, j] >= h - bw) and (pd[i, j] <= h + bw):
+                Z.append((P[i, 2] - P[j, 2]) ** 2.0)  # sample difference
+    return np.sum(Z) / (2.0 * len(Z))
+
+
+def SV(P, hs, bw):
+    '''
+    Experimental variogram for a collection of lags
+    '''
+    sv = list()
+    for h in hs:
+        sv.append(SVh(P, h, bw))
+    sv = [[hs[i], sv[i]] for i in range(len(hs)) if sv[i] > 0]
+    return np.array(sv).T
+
+
+def C(P, h, bw):
+    '''
+    Calculate the sill
+    '''
+    c0 = np.var(P[:, 2])
+    if h == 0:
+        return c0
+    return c0 - SVh(P, h, bw)
