@@ -6,9 +6,11 @@ backcall==0.1.0
 bleach==3.1.0
 Click==7.0
 colorama==0.4.1
+cycler==0.10.0
 decorator==4.4.0
 defusedxml==0.6.0
 entrypoints==0.3
+et-xmlfile==1.0.1
 execnet==1.7.1
 filelock==3.0.12
 importlib-metadata==0.23
@@ -16,15 +18,17 @@ ipykernel>=4.0.0
 ipython>=5.7.0
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
-jedi==0.15.1
+jedi>=0.15.1
 Jinja2==2.10.3
 jsonschema==3.1.1
 jupyter==1.0.0
 jupyter-client==5.3.4
 jupyter-console>=5.0.0
 jupyter-core==4.6.0
+kiwisolver==1.1.0
 kriglab==0.0.1
 MarkupSafe==1.1.1
+matplotlib>=2
 mistune==0.8.4
 more-itertools>=5.0.0
 nbconvert==5.6.0
@@ -32,6 +36,7 @@ nbformat==4.4.0
 notebook>=5.7.0
 numpy>=1.16
 packaging==19.2
+pandas>=0.24
 pandocfilters==1.4.2
 parso==0.5.1
 pickleshare==0.7.5
@@ -46,6 +51,7 @@ pytest>=4.5.0
 pytest-forked==1.1.1
 pytest-xdist==1.30.0
 python-dateutil==2.8.0
+pytz==2019.3
 pywin32==225
 pywinpty==0.5.5
 pyzmq==18.1.0
@@ -63,4 +69,5 @@ virtualenv==16.7.6
 wcwidth==0.1.7
 webencodings==0.5.1
 widgetsnbextension==3.5.1
+xlrd==1.2.0
 zipp==0.6.0
