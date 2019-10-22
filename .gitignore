@@ -8,5 +8,8 @@ env/
 *.pyc
 __pycache__/
 
-# Python package
+# Python packaging
 *.egg-info/
+
+# Output from tox
+.tox/
