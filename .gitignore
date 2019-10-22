@@ -13,3 +13,6 @@ __pycache__/
 
 # Output from tox
 .tox/
+
+# Jupyter Notebooks
+*.ipynb
