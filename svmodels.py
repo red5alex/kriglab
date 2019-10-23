@@ -1,14 +1,15 @@
 # See the companion Jupyter Notebook "Semivariogram Models" for detailed information
 
 import numpy as np
-from scipy.spatial.distance import squareform, pdist
 import collections
 from math import *
+from scipy.spatial.distance import pdist, squareform
 
 # Standard Semivariogram Models
 
-def gaussian( h, a, C0, Cn=0., **kwargs ):
-    '''
+
+def gaussian(h, a, C0, Cn=0.0, **kwargs):
+    """
     Gaussian model of the semivariogram
        sv(h) = Cn+(C0-Cn) * (1 - exp(-3*h**2/a**2))
     with:
@@ -16,21 +17,21 @@ def gaussian( h, a, C0, Cn=0., **kwargs ):
        a = range
        C0 = sill
        Cn = nugget
-    '''
+    """
     if isinstance(h, collections.Iterable):
         # calculate the gaussian function for all elements
         h = np.array(h)
-        a = np.ones( h.size ) * a
-        C0 = np.ones( h.size ) * C0
+        a = np.ones(h.size) * a
+        C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map( gaussian, h, a, C0, Cn )
+        return list(map(gaussian, h, a, C0, Cn))
     else:
         # calculate the gaussian function
-        return Cn+(C0-Cn) * (1 - exp(-3*h**2/a**2))
+        return Cn + (C0 - Cn) * (1 - exp(-3 * h ** 2 / a ** 2))
 
-    
-def spherical( h, a, C0, Cn=0., **kwargs):
-    '''
+
+def spherical(h, a, C0, Cn=0.0, **kwargs):
+    """
     Spherical model of the semivariogram
        sv(h) = Cn + (C0-Cn)*( 1.5*h/a - 0.5*(h/a)**3.0 ) if h <= a, else C0
     with:
@@ -38,24 +39,24 @@ def spherical( h, a, C0, Cn=0., **kwargs):
        a = range
        C0 = sill
        Cn = nugget
-    '''
+    """
     if isinstance(h, collections.Iterable):
         # calculate the gaussian function for all elements
         h = np.array(h)
-        a = np.ones( h.size ) * a
-        C0 = np.ones( h.size ) * C0
+        a = np.ones(h.size) * a
+        C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map( spherical, h, a, C0, Cn )
+        return list(map(spherical, h, a, C0, Cn))
     else:
         # calculate the spherical function
         if h <= a:
-            return Cn + (C0-Cn)*( 1.5*h/a - 0.5*(h/a)**3.0 )
+            return Cn + (C0 - Cn) * (1.5 * h / a - 0.5 * (h / a) ** 3.0)
         else:
             return C0
-    
 
-def exponential( h, a, C0, Cn=0., **kwargs):
-    '''
+
+def exponential(h, a, C0, Cn=0.0, **kwargs):
+    """
     Exponential model of the semivariogram
        sv(h) = Cn+(C0-Cn) * (1 - exp(-3*h/a))
     with:
@@ -63,58 +64,64 @@ def exponential( h, a, C0, Cn=0., **kwargs):
        a = range
        C0 = sill
        Cn = nugget
-    '''
+    """
     if isinstance(h, collections.Iterable):
         # calculate the gaussian function for all elements
         h = np.array(h)
-        a = np.ones( h.size ) * a
-        C0 = np.ones( h.size ) * C0
+        a = np.ones(h.size) * a
+        C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map( exponential, h, a, C0, Cn )
+        return list(map(exponential, h, a, C0, Cn))
     else:
         # calculate the gaussian function
-        return Cn+(C0-Cn) * (1 - exp(-3*h/a))
+        return Cn + (C0 - Cn) * (1 - exp(-3 * h / a))
+
 
 # business functions
+
 
 def instance_of(model, **kwargs):
     """
     return an instance of the variogram function.
     """
-    svmfct = lambda h: model( h, **kwargs)
+    svmfct = lambda h: model(h, **kwargs)
     return svmfct
 
+
 def get_empirical_semivariogram(X, Y, Z, max_distance, bandwidth):
-    '''
+    """
     Experimental variogram for a collection of lags
-    '''
-    
+    """
+
     # handle datetime objects
     if np.issubdtype(X.dtype, np.datetime64):
         # define a reference date and convert arrays to float-type
-        assert len(X.shape) == 1, "dimension for dtype array greater than 1 not supported"
-        T0 = X[0]  
+        assert (
+            len(X.shape) == 1
+        ), "dimension for dtype array greater than 1 not supported"
+        T0 = X[0]
         X = np.array(X - T0, dtype=(float)) / (1e9 * 60 * 60 * 24)
-        
-    P = np.stack( [X, Y, Z] ).T
-    pd = squareform( pdist( P[:,:2] ) )
+
+    P = np.stack([X, Y, Z]).T
+    pd = squareform(pdist(P[:, :2]))
     N = pd.shape[0]
     hs = np.arange(0, max_distance, bandwidth)
-    
+
     sv = list()
-    for h in hs:  
+    for h in hs:
         Z = list()
         for i in range(N):
-            for j in range(i+1,N):
-                if( pd[i,j] >= h-bandwidth )and( pd[i,j] <= h+bandwidth ):
-                    Z.append( ( P[i,2] - P[j,2] )**2.0 )
-        sumz = np.sum( Z ) / ( 2.0 * len( Z ) )
-        sv.append( sumz )
-    sv = [ [ hs[i], sv[i] ] for i in range( len( hs ) ) if sv[i] > 0 ]
-    return np.array( sv ).T
+            for j in range(i + 1, N):
+                if (pd[i, j] >= h - bandwidth) and (pd[i, j] <= h + bandwidth):
+                    Z.append((P[i, 2] - P[j, 2]) ** 2.0)
+        sumz = np.sum(Z) / (2.0 * len(Z))
+        sv.append(sumz)
+    sv = [[hs[i], sv[i]] for i in range(len(hs)) if sv[i] > 0]
+    return np.array(sv).T
 
-def svm2cvm( svmodel, C0=None ):
-    '''
+
+def svm2cvm(svmodel, C0=None):
+    """
     Converts a semivariogram model into a covariance model:
     cvm(h) = sill - svm(h)
     Input:  (svm)    model of the semivariogram 
@@ -122,59 +129,115 @@ def svm2cvm( svmodel, C0=None ):
                      if None, sill=svm(1e16) - this will only work if a sill is asymptotic 
                      (e.g., do not use for exponential)
     Output: (covfct) function modeling the covariance
-    '''
+    """
     # calculate the sill
     if C0 is None:
         C0 = svmodel(1e16)
     # return a covariance function
-    cvm = lambda h: C0 * np.ones_like( h ) - model( h )
+    cvm = lambda h: C0 * np.ones_like(h) - svmodel(h)
     return cvm
-    
+
 
 # Non-Standard Semivariogram functions
-def hole (h, a, C0, Cn=0., **kwargs ):
-    '''
+def hole(h, a, C0, Cn=0.0, **kwargs):
+    """
     hole effect model of the semivariogram
     Should be used in 1D kriging only.
     h = euclidean distance between a pair of points
     a = range
     C0 = sill
     Cn = nugget
-    '''
+    """
     if type(h) == np.float64:
         # calculate the hole function from Kitanidis (book, 1997)
-        return Cn+(C0-Cn)*(1-(1-h/a) * exp(-h/a) )
+        return Cn + (C0 - Cn) * (1 - (1 - h / a) * exp(-h / a))
 
     # if h is an iterable
     else:
         # calcualte the hole function for all elements
-        a = np.ones( h.size ) * a
-        C0 = np.ones( h.size ) * C0
+        a = np.ones(h.size) * a
+        C0 = np.ones(h.size) * C0
         Cn = np.ones(h.size) * Cn
-        return map( hole, h, a, C0, Cn )
+        return map(hole, h, a, C0, Cn)
 
-def hole_N (h, a, C0, Cn=0., **kwargs ):
-    '''
+
+def hole_N(h, a, C0, Cn=0.0, **kwargs):
+    """
     Hole effect model of the semivariogram 
     (Triki et al. p.1600 / Dowdall et al. 2003)
     h = euclidean distance between a pair of points
     a = range
     C0 = sill
     Cn = nugget
-    '''
+    """
     # from Triki et al. p.1600 (Dowdall et al. 2003)
     if type(h) == np.float64:
         # calculate the hole function
         if h == 0:
             return Cn
-        else: 
-            return Cn+(C0-Cn)*( 1-(sin(h/a ))/(h/a) )
+        else:
+            return Cn + (C0 - Cn) * (1 - (sin(h / a)) / (h / a))
 
     # if h is an iterable
     else:
         # calcualte the hole function for all elements
+        a = np.ones(h.size) * a
+        C0 = np.ones(h.size) * C0
+        Cn = np.ones(h.size) * Cn
+        return map(hole_N, h, a, C0, Cn)
+
+
+def hole_New (h, C0, a, Cn=0):
+    #from Triki et al. p.1600 (Dowdall et al. 2003)
+    if type(h) == np.float64:
+        # calculate the hole function
+        if h == 0:
+            return Cn
+        if h <= pi*2*a:
+            return (Cn+(C0-Cn)*(1-(sin(h/a ))/(h/a) ))
+        if pi*2*a < h <= pi*4*a:
+            return (Cn+(C0-Cn)*(1-(3*sin(h/a ))/(h/a) ))
+        if h > pi*4*a:
+            return (Cn+(C0-Cn)*(1-(4*sin(h/a ))/(h/a) ))
+    # if h is an iterable
+    else:
+        # calculate the hole function for all elements
         a = np.ones( h.size ) * a
         C0 = np.ones( h.size ) * C0
         Cn = np.ones(h.size) * Cn
-        return map( hole_N, h, a, C0, Cn )
-    
+        return map( hole_New, h, a, C0, Cn )
+
+
+def SVh(P, h, bw):
+    '''
+    Experimental semivariogram for a single lag
+    '''
+    pd = squareform(pdist(P[:, :2]))
+    N = pd.shape[0]
+    Z = list()
+    for i in range(N):
+        for j in range(i + 1, N):
+            if (pd[i, j] >= h - bw) and (pd[i, j] <= h + bw):
+                Z.append((P[i, 2] - P[j, 2]) ** 2.0)  # sample difference
+    return np.sum(Z) / (2.0 * len(Z))
+
+
+def SV(P, hs, bw):
+    '''
+    Experimental variogram for a collection of lags
+    '''
+    sv = list()
+    for h in hs:
+        sv.append(SVh(P, h, bw))
+    sv = [[hs[i], sv[i]] for i in range(len(hs)) if sv[i] > 0]
+    return np.array(sv).T
+
+
+def C(P, h, bw):
+    '''
+    Calculate the sill
+    '''
+    c0 = np.var(P[:, 2])
+    if h == 0:
+        return c0
+    return c0 - SVh(P, h, bw)
